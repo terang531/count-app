@@ -141,9 +141,13 @@
         messageEl.textContent = "ログイン中です。お待ちください...";
         return;
       }
+      const userId = auth.currentUser.uid;
+      const userRef = doc(db, "userClicks", userId);
       await updateDoc(counterRef, { count: 0 });
+      await setDoc(userRef, { count: 0, date: new Date().toISOString().split("T")[0] });
       messageEl.textContent = "";
       milestoneEl.textContent = "";
+      btn.disabled = false;
     });
   </script>
 </body>

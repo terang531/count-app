@@ -24,6 +24,7 @@
       font-size: 5rem;
       font-weight: bold;
       margin: 1rem 0;
+      transition: color 0.3s;
     }
     button {
       font-size: 1.5rem;
@@ -86,7 +87,14 @@
     // リアルタイムで値を監視
     onSnapshot(counterRef, (snap) => {
       if (snap.exists()) {
-        countEl.textContent = snap.data().count;
+        const count = snap.data().count;
+        countEl.textContent = count;
+        // 10の倍数で色を変える
+        if (count > 0 && count % 10 === 0) {
+          countEl.style.color = "#e74c3c";
+        } else {
+          countEl.style.color = "#000";
+        }
       }
     });
 

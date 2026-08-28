@@ -45,6 +45,7 @@
   <button id="btn">+1</button>
   <div id="message" style="color: red; margin-top: 1rem; font-size: 1rem;"></div>
   <div id="milestone" style="color: #0070f3; margin-top: 0.5rem; font-size: 1.2rem; font-weight: bold;"></div>
+  <div id="lastClicked" style="color: #666; margin-top: 1rem; font-size: 0.9rem;"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -74,6 +75,7 @@
     const btn = document.getElementById("btn");
     const messageEl = document.getElementById("message");
     const milestoneEl = document.getElementById("milestone");
+    const lastClickedEl = document.getElementById("lastClicked");
 
     const CLICK_LIMIT = 30;
     const MILESTONES = {
@@ -87,6 +89,11 @@
     onSnapshot(counterRef, (snap) => {
       if (snap.exists()) {
         countEl.textContent = snap.data().count;
+        // 最後に押された時刻を表示
+        if (snap.data().lastClicked) {
+          const lastClicked = new Date(snap.data().lastClicked);
+          lastClickedEl.textContent = `最後に押された時刻: ${lastClicked.toLocaleString("ja-JP")}`;
+        }
       }
     });
 
@@ -120,7 +127,10 @@
       }
 
       messageEl.textContent = "";
-      await updateDoc(counterRef, { count: increment(1) });
+      await updateDoc(counterRef, {
+        count: increment(1),
+        lastClicked: new Date().toISOString()
+      });
 
       // マイルストーンメッセージの表示
       const newCount = userSnap.exists() && userSnap.data().date === today

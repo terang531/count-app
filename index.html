@@ -43,6 +43,7 @@
   <h1>カウンター</h1>
   <div id="count">0</div>
   <button id="btn">+1</button>
+  <button id="resetBtn" style="margin-top: 1rem; background-color: #e74c3c;">リセット</button>
   <div id="message" style="color: red; margin-top: 1rem; font-size: 1rem;"></div>
   <div id="milestone" style="color: #0070f3; margin-top: 0.5rem; font-size: 1.2rem; font-weight: bold;"></div>
 
@@ -72,6 +73,7 @@
 
     const countEl = document.getElementById("count");
     const btn = document.getElementById("btn");
+    const resetBtn = document.getElementById("resetBtn");
     const messageEl = document.getElementById("message");
     const milestoneEl = document.getElementById("milestone");
 
@@ -131,6 +133,17 @@
       } else {
         milestoneEl.textContent = "";
       }
+    });
+
+    // リセットボタン
+    resetBtn.addEventListener("click", async () => {
+      if (!auth.currentUser) {
+        messageEl.textContent = "ログイン中です。お待ちください...";
+        return;
+      }
+      await updateDoc(counterRef, { count: 0 });
+      messageEl.textContent = "";
+      milestoneEl.textContent = "";
     });
   </script>
 </body>

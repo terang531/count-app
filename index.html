@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カウンターアプリ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+    #count {
+      font-size: 5rem;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+    button {
+      font-size: 1.5rem;
+      padding: 1rem 3rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #0070f3;
+      color: white;
+      cursor: pointer;
+    }
+    button:active {
+      background-color: #0051a8;
+    }
+  </style>
+</head>
+<body>
+  <h1>カウンター</h1>
+  <div id="count">0</div>
+  <button id="btn">+1</button>
+  <div id="message" style="color: red; margin-top: 1rem; font-size: 1rem;"></div>
+  <div id="milestone" style="color: #0070f3; margin-top: 0.5rem; font-size: 1.2rem; font-weight: bold;"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, increment, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBRTW9YilYr8QrDuXWY3FxkJ-xmbiWdi8g",
+      authDomain: "counter-app-48954.firebaseapp.com",
+      projectId: "counter-app-48954",
+      storageBucket: "counter-app-48954.firebasestorage.app",
+      messagingSenderId: "862299113318",
+      appId: "1:862299113318:web:75426a54559ae33dbe6aa7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const counterRef = doc(db, "counter", "value");
+
+    // 匿名認証でログイン
+    signInAnonymously(auth).catch((error) => {
+      console.error("匿名認証エラー:", error);
+    });
+
+    const countEl = document.getElementById("count");
+    const btn = document.getElementById("btn");
+    const messageEl = document.getElementById("message");
+    const milestoneEl = document.getElementById("milestone");
+
+    const CLICK_LIMIT = 30;
+    const MILESTONES = {
+      1: "もっと押してみよう",
+      5: "まだまだ行こう！",
+      10: "どんどん押してこう",
+      22: "いよっ！カウントアップ名人！"
+    };
+
+    // リアルタイムで値を監視
+    onSnapshot(counterRef, (snap) => {
+      if (snap.exists()) {
+        countEl.textContent = snap.data().count;
+      }
+    });
+
+    // ボタンを押したら+1（ログイン済みのみ、制限チェック付き）
+    btn.addEventListener("click", async () => {
+      if (!auth.currentUser) {
+        messageEl.textContent = "ログイン中です。お待ちください...";
+        return;
+      }
+
+      const userId = auth.currentUser.uid;
+      const userRef = doc(db, "userClicks", userId);
+      const today = new Date().toISOString().split("T")[0];
+
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.date === today && userData.count >= CLICK_LIMIT) {
+          messageEl.textContent = "本日のクリック上限（30回）に達しました。明日またお越しください。";
+          btn.disabled = true;
+          return;
+        }
+        if (userData.date === today) {
+          await updateDoc(userRef, { count: increment(1) });
+        } else {
+          await setDoc(userRef, { count: 1, date: today });
+        }
+      } else {
+        await setDoc(userRef, { count: 1, date: today });
+      }
+
+      messageEl.textContent = "";
+      await updateDoc(counterRef, { count: increment(1) });
+
+      // マイルストーンメッセージの表示
+      const newCount = userSnap.exists() && userSnap.data().date === today
+        ? userSnap.data().count + 1
+        : 1;
+      if (MILESTONES[newCount]) {
+        milestoneEl.textContent = MILESTONES[newCount];
+      } else {
+        milestoneEl.textContent = "";
+      }
+    });
+  </script>
+</body>
+</html>

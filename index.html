@@ -24,6 +24,7 @@
       font-size: 5rem;
       font-weight: bold;
       margin: 1rem 0;
+      transition: color 0.3s;
     }
     button {
       font-size: 1.5rem;
@@ -84,11 +85,25 @@
       10: "どんどん押してこう",
       22: "いよっ！カウントアップ名人！"
     };
+    const COLORS = ["#000", "#e74c3c", "#2ecc71", "#3498db", "#f39c12", "#9b59b6"];
+    let nextColorChange = 3;
+    let colorIndex = 0;
 
     // リアルタイムで値を監視
     onSnapshot(counterRef, (snap) => {
       if (snap.exists()) {
-        countEl.textContent = snap.data().count;
+        const count = snap.data().count;
+        countEl.textContent = count;
+        // ランダムで色を変える
+        if (count > 0 && count >= nextColorChange) {
+          colorIndex = (colorIndex + 1) % COLORS.length;
+          countEl.style.color = COLORS[colorIndex];
+          nextColorChange = count + Math.floor(Math.random() * 10) + 3;
+        } else if (count === 0) {
+          countEl.style.color = "#000";
+          nextColorChange = 3;
+          colorIndex = 0;
+        }
       }
     });
 

@@ -143,11 +143,19 @@
       }
       const userId = auth.currentUser.uid;
       const userRef = doc(db, "userClicks", userId);
+      const today = new Date().toISOString().split("T")[0];
+      const userSnap = await getDoc(userRef);
+
       await updateDoc(counterRef, { count: 0 });
-      await setDoc(userRef, { count: 0, date: new Date().toISOString().split("T")[0] });
-      messageEl.textContent = "";
       milestoneEl.textContent = "";
-      btn.disabled = false;
+
+      if (userSnap.exists() && userSnap.data().date === today && userSnap.data().count >= CLICK_LIMIT) {
+        messageEl.textContent = "リセットしました。ただし本日のクリック上限（30回）に達しているため、これ以上はクリックできません。明日またお越しください。";
+        btn.disabled = true;
+      } else {
+        messageEl.textContent = "リセットしました";
+        btn.disabled = false;
+      }
     });
   </script>
 </body>
